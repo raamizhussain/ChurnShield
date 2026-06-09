@@ -1,0 +1,38 @@
+- Calculate velocity features
+-- 7 day average of user logins and clicks (tract week-over-week activity)
+
+- Lifelines Library : Calculate statistical survival curves (Instead of just a YES or NO)
+
+- Compresses single row per customer, training a Cox Proportional Hazards (CPH) statistical model - saves individual 30,60,90 day churn probabiliy curves for every customer.
+- Total duration of time the customer has spent with the service and 1,0 representing if the event occurred
+
+ERROR: ConvergenceError, caused by high collinearity - Drop Redundant, highly correlated columns
+
+ERROR: Model Crashed, cuz it checked only the final day, left it with just 1 churn event
+FIX: Aggregate the whole historical timeline to capture dropouts whenever they happened.
+
+Model Concordance Index (C-index) : 0.5505  [bcuz of lack of variance] , 1.0 is perfect prediction
+
+UPGRADE: upgrade the data generator acc to real life scenarios (active all days to some customers constantly dropping off)
+- Cross Cox model benchmark of >= 0.72
+
+New Concordance Index : 0.7362 
+
+CAUSALML FRAMEWORK - scientific ML packages - calculate individualized treatment effect
+- Unlike traditional ML, we use Causal Inference to determine diff scenarios:
+1. PERSUADABLES: Who stay only if they recieve an offer
+2. SURE THINGS: Stay regardless of offer
+3. LOST CAUSES: Leave regardless of offer
+4. SLEEPING DOGS: Who leave bcuz they received an offer (triggered)
+
+- Installed scikit-learn and lightgbm
+
+T-LEARNER:
+- decides if to spend money on offers on a particular customer
+- Sure things and Lost Causes, no use with offers, money waste
+- Target PERSUADABLES
+- Train 2 models: Model 0 (learns to predict no offer customers) and Model 1 (who got offer)
+- Uplift Score: Chances of staying WITH offer - staying WITHOUT
+- High Scores -> Persuadables. Discount makes diff
+  Low Scores -> Discounts do nothing. Waste of money.
+

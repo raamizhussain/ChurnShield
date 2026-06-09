@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-import json
 
 np.random.seed(42)
 num_users = 100
@@ -27,14 +26,24 @@ df_profiles.to_csv('mock_customer_profiles.csv', index=False)
 activity_types = ['login', 'click', 'support_ticket', 'feature_usage']
 activity_records = []
 
-for c_id, s_date in zip(customer_ids, signup_dates):
+churn_targets = np.random.choice([True, False], size=num_users, p=[0.35, 0.65])
+
+for i, (c_id, s_date) in enumerate(zip(customer_ids, signup_dates)):
+    will_churn = churn_targets[i]
     total_days = 90
+    max_active_days = np.random.randint(20, 70) if will_churn else total_days
+    
     for day in range(total_days):
         current_day = s_date + timedelta(days=day)
-        if current_day > datetime(2026, 4, 1):
+        if current_day > datetime(2026, 4, 1) or day > max_active_days:
             break
             
-        num_actions = np.random.randint(0, 10)
+        decay_factor = (max_active_days - day) / max_active_days if will_churn else 1.0
+        num_actions = int(np.random.randint(1, 10) * decay_factor)
+        
+        if num_actions == 0 and will_churn and day > max_active_days - 5:
+            continue
+            
         for _ in range(num_actions):
             activity_records.append({
                 'customer_id': c_id,
@@ -44,9 +53,8 @@ for c_id, s_date in zip(customer_ids, signup_dates):
             })
 
 df_activities = pd.DataFrame(activity_records)
-
 duplicates = df_activities.sample(frac=0.05, random_state=42)
 df_activities_with_dupes = pd.concat([df_activities, duplicates], ignore_index=True)
 
 df_activities_with_dupes.to_csv('mock_raw_logs.csv', index=False)
-print("SUCCESS: Generated mock_customer_profiles.csv and mock_raw_logs.csv with duplicates included.")
+print("SUCCESS: Generated realistic datasets containing structural dropouts.")
