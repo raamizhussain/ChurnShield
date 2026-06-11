@@ -36,3 +36,30 @@ T-LEARNER:
 - High Scores -> Persuadables. Discount makes diff
   Low Scores -> Discounts do nothing. Waste of money.
 
+ERROR: Over smoothing of uplift Score
+FIX: Feature scaling: randomized, real-world variation, distinct customer activities
+     Hyperparameter Tuning: min_child_samples set to 2 in LightGBM.
+
+STREAMLIT: UI library for front end.
+
+Expected ROI = (Customer Lifetime Value x Uplift Score) - Intervention Cost 
+
+- Completed building BASIC/CORE ChurnShield, with 100 customers (auto-generated) and evaluated. 
+
+- Building High-Volume Streaming Event Simulator - using huge synthetic generated data
+
+- Replacing the old data in db with the new 3.1 million new user rows
+
+ERROR: Took way too long to ingest new data inside the table.
+FIX: Used fast group-sorting tools to remove duplicates and upload data in giant blocks instead of one by one.
+
+- C-index dropped to 0.5479 (model confused bw no. of dropped actions instead of % drop)
+
+- C-index increased to 0.6088 (as we using only 2 features for anaylsis)
+
+- Implementing advanced features: support friction metrics (no of support tickets in a period of time)
+                                  click-to-login ratio = total clicks/total logins
+                                  recency gaps (inactivity features)
+
+- C-index jumps to 0.8128 after implementing these features
+
