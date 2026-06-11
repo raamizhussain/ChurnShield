@@ -1,11 +1,7 @@
-import configparser
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
+from db_connection import get_db_engine
 
-config = configparser.ConfigParser()
-config.read('config.ini')
-
-db_url = f"postgresql://{config['database']['user']}:{config['database']['password']}@{config['database']['host']}:{config['database']['port']}/{config['database']['database']}"
-engine = create_engine(db_url)
+engine = get_db_engine()
 
 populate_query = """
 INSERT INTO dim_customer (customer_id, signup_date, current_tier, country)
@@ -17,5 +13,5 @@ ON CONFLICT (customer_id) DO UPDATE SET
 """
 
 with engine.begin() as conn:
-    result = conn.execute(text(populate_query))
-    print(f"SUCCESS: Synced customer profiles into dim_customer.")
+    conn.execute(text(populate_query))
+    print("SUCCESS: Synced customer profiles into dim_customer.")

@@ -1,11 +1,7 @@
-import configparser
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
+from db_connection import get_db_engine
 
-config = configparser.ConfigParser()
-config.read('config.ini')
-
-db_url = f"postgresql://{config['database']['user']}:{config['database']['password']}@{config['database']['host']}:{config['database']['port']}/{config['database']['database']}"
-engine = create_engine(db_url)
+engine = get_db_engine()
 
 populate_fact_query = """
 INSERT INTO fact_customer_activity (customer_key, date_actual, activity_type, daily_value_sum, daily_event_count)
@@ -22,5 +18,5 @@ ON CONFLICT DO NOTHING;
 """
 
 with engine.begin() as conn:
-    result = conn.execute(text(populate_fact_query))
+    conn.execute(text(populate_fact_query))
     print("SUCCESS: Consolidated raw logs and populated fact_customer_activity table.")

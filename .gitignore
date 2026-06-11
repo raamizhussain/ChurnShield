@@ -7,3 +7,4 @@ mock_raw_logs.csv
 engineered_features.csv
 survival_predictions.csv
 causal_uplift_predictions.csv
+.env
