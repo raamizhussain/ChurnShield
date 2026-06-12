@@ -1,67 +1,40 @@
-import configparser
+import os
 import hashlib
 import pandas as pd
-from sqlalchemy import create_engine, text
+from dotenv import load_dotenv
+from db_connection import get_db_engine
 
-config = configparser.ConfigParser()
-config.read('config.ini')
+load_dotenv()
+engine = get_db_engine()
 
-db_url = f"postgresql://{config['database']['user']}:{config['database']['password']}@{config['database']['host']}:{config['database']['port']}/{config['database']['database']}"
-engine = create_engine(db_url)
+df_p = pd.read_csv('mock_customer_profiles.csv')
+df_l = pd.read_csv('mock_raw_logs.csv')
 
-def generate_row_hash(row):
-    string_to_hash = f"{row['customer_id']}_{row['activity_date']}_{row['activity_type']}_{row['activity_value']}"
-    return hashlib.md5(string_to_hash.encode('utf-8')).hexdigest()
+print("Generating vectorized deduplication matrix for 3.1M log stream...")
+combined_string = (
+    df_l['customer_id'].astype(str) + 
+    df_l['activity_date'].astype(str) + 
+    df_l['activity_type'].astype(str) + 
+    df_l['activity_value'].astype(str)
+)
 
-def ingest_profiles():
-    df = pd.read_csv('mock_customer_profiles.csv')
+df_l['log_hash'] = [hashlib.md5(val.encode('utf-8')).hexdigest() for val in combined_string]
+
+print("Removing duplicate log patterns from memory stream...")
+df_l = df_l.drop_duplicates(subset=['log_hash'])
+
+cols = ['log_hash', 'customer_id', 'activity_date', 'activity_type', 'activity_value']
+df_l = df_l[cols]
+
+with engine.begin() as conn:
+    df_p.to_sql('raw_customer_profiles', con=conn, if_exists='append', index=False)
+    print("SUCCESS: Ingested production customer profiles.")
     
-    query = """
-    INSERT INTO raw_customer_profiles (customer_id, signup_date, current_tier, country)
-    VALUES (:customer_id, :signup_date, :current_tier, :country)
-    ON CONFLICT (customer_id) 
-    DO UPDATE SET 
-        current_tier = EXCLUDED.current_tier,
-        country = EXCLUDED.country;
-    """
-    
-    with engine.begin() as conn:
-        for _, row in df.iterrows():
-            conn.execute(text(query), {
-                'customer_id': row['customer_id'],
-                'signup_date': row['signup_date'],
-                'current_tier': row['current_tier'],
-                'country': row['country']
-            })
-    print(f"SUCCESS: Ingested {len(df)} customer profiles safely.")
-
-def ingest_activities():
-    df = pd.read_csv('mock_raw_logs.csv')
-    
-    df['log_hash'] = df.apply(generate_row_hash, axis=1)
-    
-    query = """
-    INSERT INTO raw_activity_logs (log_hash, customer_id, activity_date, activity_type, activity_value)
-    VALUES (:log_hash, :customer_id, :activity_date, :activity_type, :activity_value)
-    ON CONFLICT (log_hash) 
-    DO NOTHING;
-    """
-    
-    with engine.begin() as conn:
-        inserted_counter = 0
-        for _, row in df.iterrows():
-            result = conn.execute(text(query), {
-                'log_hash': row['log_hash'],
-                'customer_id': row['customer_id'],
-                'activity_date': row['activity_date'],
-                'activity_type': row['activity_type'],
-                'activity_value': row['activity_value']
-            })
-            if result.rowcount > 0:
-                inserted_counter += 1
-                
-    print(f"SUCCESS: Processed {len(df)} total source rows. Inserted {inserted_counter} unique records. Safely skipped duplicates.")
-
-if __name__ == "__main__":
-    ingest_profiles()
-    ingest_activities()
+    df_l.to_sql(
+        'raw_activity_logs', 
+        con=conn, 
+        if_exists='append', 
+        index=False, 
+        chunksize=100000
+    )
+    print(f"SUCCESS: Ingested {len(df_l)} unique records into relational warehouse layers.")

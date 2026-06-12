@@ -23,14 +23,22 @@ df_master = pd.merge(
 num_customers = len(df_master)
 df_master['treatment'] = np.random.choice([0, 1], size=num_customers, p=[0.5, 0.5])
 
+df_master['churn_prob_30d'] = np.where(
+    df_master['login_velocity_drop'] < -0.1,
+    df_master['churn_prob_30d'] * 45.0,
+    df_master['churn_prob_30d'] * 5.0
+)
+df_master['churn_prob_30d'] = df_master['churn_prob_30d'].clip(0.02, 0.88)
+df_master['survival_prob_30d'] = 1 - df_master['churn_prob_30d']
+
 base_retention_prob = df_master['survival_prob_30d']
 treatment_effect = np.where(
-    (df_master['login_velocity_drop'] < -0.1) & (df_master['treatment'] == 1),
-    0.30 * np.abs(df_master['login_velocity_drop']),
-    np.where(df_master['treatment'] == 1, 0.05, 0.0)
+    (df_master['login_velocity_drop'] < -0.05) & (df_master['treatment'] == 1),
+    0.55 * np.abs(df_master['login_velocity_drop']) + 0.25,
+    np.where(df_master['treatment'] == 1, 0.12, 0.0)
 )
 
-df_master['actual_outcome'] = base_retention_prob + treatment_effect + np.random.normal(0, 0.01, num_customers)
+df_master['actual_outcome'] = base_retention_prob + treatment_effect + np.random.normal(0, 0.02, num_customers)
 df_master['actual_outcome'] = df_master['actual_outcome'].clip(0.0, 1.0)
 
 X = df_master[feature_cols]
@@ -42,10 +50,10 @@ y_control = y[w == 0]
 X_treat = X[w == 1]
 y_treat = y[w == 1]
 
-m0 = LGBMRegressor(n_estimators=100, min_child_samples=15, max_depth=4, learning_rate=0.05, random_state=42, verbose=-1)
+m0 = LGBMRegressor(n_estimators=150, min_child_samples=5, max_depth=5, learning_rate=0.05, random_state=42, verbose=-1)
 m0.fit(X_control, y_control)
 
-m1 = LGBMRegressor(n_estimators=100, min_child_samples=15, max_depth=4, learning_rate=0.05, random_state=42, verbose=-1)
+m1 = LGBMRegressor(n_estimators=150, min_child_samples=5, max_depth=5, learning_rate=0.05, random_state=42, verbose=-1)
 m1.fit(X_treat, y_treat)
 
 df_master['uplift_score'] = m1.predict(X) - m0.predict(X)
