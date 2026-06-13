@@ -63,13 +63,18 @@ def total_warehouse_rebuild():
         key_map = df_db_dims.set_index('customer_id')['customer_key'].to_dict()
         
         print("Removing duplicate patterns and cleaning log stream memory...")
-        df_logs = df_logs.drop_duplicates(subset=['customer_id', 'date_actual', 'activity_type']).copy()
+        df_logs = df_logs.drop_duplicates(subset=['customer_id', 'activity_date', 'activity_type']).copy()
         
         print("Mapping customer transactional indices to SCD Type 2 master nodes...")
         df_logs['customer_key'] = df_logs['customer_id'].map(key_map)
         
         df_logs = df_logs.dropna(subset=['customer_key'])
         df_logs['customer_key'] = df_logs['customer_key'].astype(int)
+        
+        df_logs = df_logs.rename(columns={
+            'activity_date': 'date_actual',
+            'activity_value': 'daily_event_count'
+        })
         
         print(f"Bulk streaming {len(df_logs)} records into database layers...")
         df_logs[['customer_key', 'customer_id', 'date_actual', 'activity_type', 'daily_event_count']].to_sql(
