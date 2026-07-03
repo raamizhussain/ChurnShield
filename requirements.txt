@@ -7,3 +7,5 @@ sqlalchemy
 psycopg2-binary
 redis
 requests
+groq>=0.5.0
+requests>=2.31.0
