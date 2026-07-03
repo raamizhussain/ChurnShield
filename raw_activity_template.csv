@@ -1,0 +1,4 @@
+customer_id,timestamp,activity_type,resolved
+CUST_101,2026-07-01,login,true
+CUST_101,2026-07-02,support_ticket,false
+CUST_102,2026-07-02,click,true

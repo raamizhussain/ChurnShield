@@ -63,6 +63,7 @@ df_output = df_master[[
     'login_velocity_drop', 'click_velocity_drop', 'treatment', 'actual_outcome', 'uplift_score'
 ]]
 
+
 df_output.to_csv('causal_uplift_predictions.csv', index=False)
 print("--- Advanced Causal Uplift Snapshot ---")
 print(df_output[['customer_id', 'churn_prob_30d', 'uplift_score']].head())

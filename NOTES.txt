@@ -1,3 +1,5 @@
+- Alchemy - connect and work with DBs on Py without raw SQL queries
+
 - Calculate velocity features
 -- 7 day average of user logins and clicks (tract week-over-week activity)
 
@@ -18,6 +20,7 @@ UPGRADE: upgrade the data generator acc to real life scenarios (active all days 
 
 New Concordance Index : 0.7362 
 
+(Causal -> finds the cause-and-effect instead of just finding patterns. Tells what will happen with a specific action)
 CAUSALML FRAMEWORK - scientific ML packages - calculate individualized treatment effect
 - Unlike traditional ML, we use Causal Inference to determine diff scenarios:
 1. PERSUADABLES: Who stay only if they recieve an offer
@@ -60,7 +63,61 @@ FIX: Used fast group-sorting tools to remove duplicates and upload data in giant
 - Implementing advanced features: support friction metrics (no of support tickets in a period of time)
                                   click-to-login ratio = total clicks/total logins
                                   recency gaps (inactivity features)
-                                  
-                                  
-                 
-                  
+
+- C-index jumps to 0.8128 after implementing these features
+
+- Visualization using Plotly: 
+  - Kaplan-Meier curve -> displays real-time decay of customers cohorts over time
+  - Qini Uplift Curve -> proves the financial value of targeted retention efforts compared to random marketing.
+
+------------------ Going even advanced -----------------
+
+
+- Upgrading database to SCD Type 2 (track and manage historical changes to dimensional data by preserving full history and not overwriting the old information)
+   - historical logs are important or else ML model confuses 
+
+- Scraping script to extract real-time public sentiment, trends
+  - gather recent data
+  - to compete with companies 
+  - teach models to understand market context and trends
+
+- Rewriting feature engineering pipeline with multi-competitor market context 
+
+ERROR: The ETL sync script failed after a dimension table truncate shifted the surrogate keys, breaking the joins with the fact table
+FIX: Completely rebuilt the warehouse using synchronized DATE structures and re-mapped the raw event logs directly to the new SCD Type 2 dimension keys on bulk ingestion
+
+- Data pipeline is fully synchronized.
+
+- Building FastAPI Core Low-Latency Inference Engine [installed fastapi, uvicorn, pydantic, joblib]
+   - validates real-time user data, runs models and instantly returns priority Score
+
+- Redis Cache-Aside Layer : optimization layer checks Redis cahce before touching slow DBs or ML pipelines
+   - Cache Hit: Data found in Redis -> returns instantly -> skips DB
+   - Cache Miss: Data missing -> fetches from DB -> saves to Redis with TTL expiration -> return data
+   [protects core DBs from crashing during massive traffic spikes]
+
+- Automated Alert and Dispatch Loop
+   - scans customer data, flags high-risk accs, automatically sends alerts to Slack or CRM 
+  
+- Production Grade System Orchestrator (master Orchestrator)
+   - automating data scraping, ingestion, feature engineering, Redis, alerting in a sequential manner
+   - eliminates manual execution
+   - easy integration with enterprise schedulers (Apache Airflow, Prefect, Linux cron)
+
+- Containerizing the Infrastructure using Docker
+
+- Deploying it to the Cloud for use by small enterprises
+
+--------------------------------------------------------------
+ADVANCED FEATURES ADDITION
+
+Creating the Agentic Explanation Layer Core 
+-> Use Groq's fast SDK to convert complex machine learning math into short business summary
+
+Deploying it to the web -> The users can utilise it to test their own customer data 
+-> User uploads a customer CSV, validated by FastAPI for required columns and system metrics.
+-> The system that performs batch AI inference, utilizing Llama via Groq to generate risk summaries, immediately updating the dashboard with results
+
+
+
+  
